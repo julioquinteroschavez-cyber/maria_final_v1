@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRECER IFD - Sistema SST</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="datos.js"></script>
+<style>
+:root {
+  --primary: #004d22;
+  --accent: #007534;
+  --accent2: #F89A1C;
+  --success: #007534;
+  --warning: #F89A1C;
+  --danger: #dc2626;
+  --info: #90C04A;
+  --bg: #f5faf6;
+  --card: #ffffff;
+  --border: #c8e8d4;
+  --text: #1a3d1a;
+  --muted: #5a8c6a;
+  --header-h: 70px;
+  --nav-h: 52px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+/* ===== HEADER ===== */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: linear-gradient(135deg, #003d1a 0%, #007534 65%, #F89A1C 100%);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; z-index: 1000;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+}
+
+.header-brand { display: flex; align-items: center; gap: 14px; }
+.header-logo {
+  width: 46px; height: 46px; background: rgba(255,255,255,0.15);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.header-logo svg { width: 26px; height: 26px; stroke: white; fill: none; stroke-width: 2; }
+.header-title-wrap {}
+.header-company { font-size: 20px; font-weight: 800; color: white; letter-spacing: 2px; line-height: 1.1; }
+.header-system { font-size: 10px; color: rgba(255,255,255,0.7); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+
+.header-right { display: flex; align-items: center; gap: 20px; }
+.header-user { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.85); font-size: 13px; }
+.header-user svg { width: 20px; height: 20px; stroke: white; fill: none; stroke-width: 2; }
+.header-date { font-size: 12px; color: rgba(255,255,255,0.6); }
+.btn-refresh {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px;
+  cursor: pointer; transition: all 0.2s; font-weight: 600;
+}
+.btn-refresh:hover { background: rgba(255,255,255,0.25); }
+.btn-refresh svg { width: 14px; height: 14px; stroke: white; fill: none; stroke-width: 2.5; }
+.btn-logout {
+  background: rgba(220,38,38,0.3); border: 1px solid rgba(220,38,38,0.5);
+  color: white; padding: 7px 14px; border-radius: 20px; font-size: 12px;
+  cursor: pointer; transition: all 0.2s; font-weight: 600;
+}
+.btn-logout:hover { background: rgba(220,38,38,0.5); }
+
+/* ===== NAV TABS ===== */
+#nav {
+  position: fixed; top: var(--header-h); left: 0; right: 0; height: var(--nav-h);
+  background: white; border-bottom: 2px solid var(--border);
+  display: flex; align-items: stretch; padding: 0 20px; z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.nav-tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 20px; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--muted); border-bottom: 3px solid transparent;
+  transition: all 0.2s; white-space: nowrap; position: relative; top: 2px;
+}
+.nav-tab:hover { color: var(--accent); }
+.nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.nav-tab svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+.badge {
+  background: var(--accent); color: white; font-size: 10px;
+  padding: 1px 6px; border-radius: 10px; font-weight: 700;
+}
+
+/* ===== MAIN CONTENT ===== */
+#content {
+  margin-top: calc(var(--header-h) + var(--nav-h));
+  padding: 20px; min-height: calc(100vh - var(--header-h) - var(--nav-h));
+}
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--card); border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07); border: 1px solid var(--border);
+}
+.card-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title {
+  font-size: 14px; font-weight: 700; color: var(--primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title svg { width: 16px; height: 16px; stroke: var(--accent); fill: none; stroke-width: 2; }
+.card-body { padding: 16px 20px; }
+
+/* ===== KPI CARDS ===== */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 14px; margin-bottom: 20px; }
+.kpi-card {
+  background: white; border-radius: 12px; padding: 18px;
+  border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-left: 4px solid var(--accent);
+}
+.kpi-card.success { border-left-color: var(--success); }
+.kpi-card.warning { border-left-color: var(--warning); }
+.kpi-card.danger  { border-left-color: var(--danger); }
+.kpi-card.info    { border-left-color: var(--info); }
+.kpi-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.kpi-value { font-size: 28px; font-weight: 800; color: var(--primary); line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ===== MAP ===== */
+#map { height: 500px; border-radius: 10px; z-index: 1; }
+
+.map-layout { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+@media(max-width:900px) { .map-layout { grid-template-columns: 1fr; } }
+
+.detail-panel {
+  background: white; border-radius: 12px; border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.detail-header {
+  background: linear-gradient(135deg, var(--primary), #1a4a7a);
+  padding: 16px 20px; color: white;
+}
+.detail-header h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.detail-header p { font-size: 11px; opacity: 0.7; }
+.detail-body { padding: 16px; flex: 1; overflow-y: auto; }
+.detail-placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 200px; color: var(--muted); text-align: center;
+}
+.detail-placeholder svg { width: 48px; height: 48px; stroke: var(--border); fill: none; stroke-width: 1.5; margin-bottom: 12px; }
+.detail-placeholder p { font-size: 13px; }
+
+.detail-item { margin-bottom: 12px; }
+.detail-item-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.detail-item-value { font-size: 13px; color: var(--text); font-weight: 500; }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.status-vigente { background: #dcfce7; color: #16a34a; }
+.status-vencido { background: #fee2e2; color: #dc2626; }
+.status-pendiente { background: #fef9c3; color: #ca8a04; }
+.status-default { background: #e0f2fe; color: #0369a1; }
+
+/* ===== TABLE ===== */
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  min-width: 600px;
+}
+thead th {
+  background: #f0f4f8; padding: 10px 12px; text-align: left;
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border); white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid #f0f4f8; transition: background 0.15s; }
+tbody tr:hover { background: #f8fbff; }
+tbody td { padding: 10px 12px; color: var(--text); }
+tbody td:first-child { font-weight: 600; }
+
+/* ===== FILTER BAR ===== */
+.filter-bar {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 16px;
+}
+.filter-bar input, .filter-bar select {
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+  font-size: 13px; color: var(--text); background: white; outline: none;
+  transition: border-color 0.2s;
+}
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+.filter-bar input { width: 220px; }
+
+/* ===== ACCIDENTES ===== */
+.mes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.mes-card {
+  background: white; border-radius: 10px; padding: 14px;
+  border: 1px solid var(--border); text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.mes-card .mes-name { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+.mes-card .mes-count { font-size: 24px; font-weight: 800; color: var(--danger); }
+.mes-card .mes-dias { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ===== RESUMEN LAYOUT ===== */
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+@media(max-width:900px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+
+.progress-bar-wrap { margin: 6px 0; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.prog-green  { background: var(--success); }
+.prog-blue   { background: var(--accent); }
+.prog-orange { background: var(--warning); }
+.prog-red    { background: var(--danger); }
+
+/* ===== LEGEND ===== */
+.map-legend {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  padding: 12px 16px; background: white;
+  border-radius: 0 0 10px 10px; border: 1px solid var(--border);
+  border-top: none;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+/* ===== TOOLTIP ===== */
+.leaflet-tooltip-custom {
+  background: white; border: 1px solid #dde8f0; border-radius: 8px;
+  padding: 8px 12px; font-family: 'Segoe UI',Arial,sans-serif; font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #a8d4b8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #78b890; }
+
+/* ===== CHART CONTAINERS ===== */
+.chart-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.chart-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media(max-width:900px) { .chart-row-2, .chart-row-3 { grid-template-columns: 1fr; } }
+.chart-card {
+  background: white; border-radius: 12px; border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06); padding: 16px 18px;
+}
+.chart-card-full { margin-bottom: 16px; }
+.chart-title {
+  font-size: 13px; font-weight: 700; color: var(--primary);
+  margin-bottom: 2px; display: flex; align-items: center; gap: 6px;
+}
+.chart-note { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+.chart-wrap { position: relative; }
+
+/* ===== AGENCY SEARCH BAR ===== */
+.agency-search-wrap { margin-bottom: 16px; position: relative; }
+.agency-search-inner {
+  display: flex; align-items: center; gap: 12px;
+  background: white; border: 2px solid var(--border);
+  border-radius: 12px; padding: 11px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: border-color 0.2s;
+  position: relative;
+}
+.agency-search-inner:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,117,52,0.12);
+}
+.agency-search-inner svg { width:18px; height:18px; stroke:var(--muted); fill:none; stroke-width:2; flex-shrink:0; }
+.agency-search-inner input {
+  flex:1; border:none; outline:none; font-size:14px;
+  color:var(--text); background:transparent;
+}
+.agency-search-inner input::placeholder { color: var(--muted); }
+.agency-search-clear {
+  background:none; border:none; cursor:pointer; color:var(--muted);
+  font-size:18px; line-height:1; padding:0 2px; display:none;
+}
+.agency-search-clear:hover { color: var(--danger); }
+.agency-dropdown {
+  position:absolute; top:calc(100% + 4px); left:0; right:0;
+  background:white; border-radius:10px; border:1px solid var(--border);
+  box-shadow:0 8px 24px rgba(0,0,0,0.12); max-height:300px;
+  overflow-y:auto; z-index:500; display:none;
+}
+.agency-dropdown.open { display:block; }
+.agency-option {
+  padding:10px 16px; cursor:pointer; display:flex; align-items:center;
+  gap:10px; font-size:13px; border-bottom:1px solid #f0f7f3; transition:background 0.15s;
+}
+.agency-option:last-child { border-bottom:none; }
+.agency-option:hover { background:#f0f7f3; }
+.agency-opt-id { font-weight:700; color:var(--accent); min-width:75px; font-size:11px; }
+.agency-opt-name { flex:1; color:var(--text); }
+.agency-opt-reg { font-size:11px; color:var(--muted); white-space:nowrap; }
+.agency-no-results { padding:16px; text-align:center; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="header-brand">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="header-title-wrap">
+      <div class="header-company">CRECER IFD</div>
+      <div class="header-system">Sistema de Salud y Seguridad en el Trabajo</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-date" id="headerDate"></div>
+    <button class="btn-refresh" onclick="refreshData()">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Actualizar
+    </button>
+    <div class="header-user">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span id="headerUser">Usuario</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-tab active" onclick="switchTab('resumen')" data-tab="resumen">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Resumen
+  </div>
+  <div class="nav-tab" onclick="switchTab('comite')" data-tab="comite">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Comité Mixto
+    <span class="badge" id="badgeComite">0</span>
+  </div>
+  <div class="nav-tab" onclick="switchTab('pgsst')" data-tab="pgsst">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    Plan GSST
+    <span class="badge" id="badgePgsst">0</span>
+  </div>
+  <div class="nav-tab" onclick="switchTab('accidentes')" data-tab="accidentes">
+    <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Accidentes
+    <span class="badge" id="badgeAcc" style="background:var(--danger)">0</span>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<main id="content">
+
+  <!-- ===== RESUMEN ===== -->
+  <div id="tab-resumen" class="tab-pane active">
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- Búsqueda de agencias -->
+    <div class="agency-search-wrap">
+      <div class="agency-search-inner">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="agencySearch" placeholder="Buscar agencia o sucursal por nombre, ID o regional..."
+          oninput="onAgencyInput(this.value)" onfocus="showAgencyDropdown()" onblur="setTimeout(hideAgencyDropdown,200)" autocomplete="off">
+        <button class="agency-search-clear" id="agencyClearBtn" onclick="clearAgencySearch()">✕</button>
+      </div>
+      <div class="agency-dropdown" id="agencyDropdown"></div>
+    </div>
+
+    <div class="map-layout">
+      <div>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Mapa de Sucursales
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="mapFilter" onchange="filterMap()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);">
+                <option value="all">Todas las regionales</option>
+              </select>
+            </div>
+          </div>
+          <div id="map"></div>
+          <div class="map-legend" id="mapLegend"></div>
+        </div>
+      </div>
+
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h3 id="detailName">Seleccione una Sucursal</h3>
+          <p id="detailSub">Haga clic en un marcador del mapa</p>
+        </div>
+        <div class="detail-body" id="detailBody">
+          <div class="detail-placeholder">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <p>Seleccione una sucursal<br>en el mapa para ver sus datos</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COMITÉ MIXTO ===== -->
+  <div id="tab-comite" class="tab-pane">
+    <div class="kpi-grid" id="kpiComite"></div>
+
+    <!-- Gráficos Comité -->
+    <div class="chart-row-2">
+      <div class="chart-card">
+        <div class="chart-title">Estado de Comités</div>
+        <div class="chart-note">Clic en sector para filtrar la tabla</div>
+        <div class="chart-wrap" style="height:230px;"><canvas id="chComiteEstado"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Por Regional</div>
+        <div class="chart-note">Clic en barra para filtrar por regional</div>
+        <div class="chart-wrap" style="height:230px;"><canvas id="chComiteRegional"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-card chart-card-full">
+      <div class="chart-title">Documentación Completada (%)</div>
+      <div class="chart-note">Porcentaje de sucursales con cada documento presentado</div>
+      <div class="chart-wrap" style="height:170px;"><canvas id="chComiteDocs"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Comités Mixtos de Higiene y Seguridad
+        </div>
+        <button onclick="switchTab('form_comite')" style="background:var(--accent);color:white;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Nuevo Registro</button>
+      </div>
+      <div class="card-body">
+        <div class="filter-bar">
+          <input type="text" id="filterComite" placeholder="Buscar sucursal..." onkeyup="filterTable('comiteTable', this.value)">
+          <select id="filterComiteEst" onchange="filterTableMulti('comiteTable', [{col:9, val:this.value}])">
+            <option value="">Todos los estados</option>
+            <option>Vigente</option>
+            <option>Vencido</option>
+          </select>
+          <select id="filterComiteReg" onchange="filterTableByRegional('comiteTable', this.value)">
+            <option value="">Todas las regionales</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="comiteTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Regional</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Funcionarios</th>
+                <th>Tipo Comité</th>
+                <th>F. Posesión</th>
+                <th>F. Vencimiento</th>
+                <th>Estado</th>
+                <th>Memorándum</th>
+                <th>Acta Posesión</th>
+                <th>Certificado</th>
+                <th>1er Reporte</th>
+                <th>2do Reporte</th>
+                <th>3er Reporte</th>
+                <th>Rep. Final</th>
+                <th>OBS</th>
+              </tr>
+            </thead>
+            <tbody id="comiteBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PGSST ===== -->
+  <div id="tab-pgsst" class="tab-pane">
+    <div class="kpi-grid" id="kpiPgsst"></div>
+
+    <!-- Gráficos PGSST -->
+    <div class="chart-row-2">
+      <div class="chart-card">
+        <div class="chart-title">Estado PGSST</div>
+        <div class="chart-note">Clic en sector para filtrar la tabla</div>
+        <div class="chart-wrap" style="height:230px;"><canvas id="chPgsstEstado"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Por Regional</div>
+        <div class="chart-note">Clic en barra para filtrar por regional</div>
+        <div class="chart-wrap" style="height:230px;"><canvas id="chPgsstRegional"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-card chart-card-full">
+      <div class="chart-title">Reportes y Certificados Entregados</div>
+      <div class="chart-note">Comparativa de documentos entregados vs pendientes</div>
+      <div class="chart-wrap" style="height:160px;"><canvas id="chPgsstReportes"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Plan General de Salud y Seguridad en el Trabajo
+        </div>
+        <button onclick="switchTab('form_pgsst')" style="background:var(--accent);color:white;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Nuevo Registro</button>
+      </div>
+      <div class="card-body">
+        <div class="filter-bar">
+          <input type="text" id="filterPgsst" placeholder="Buscar sucursal..." onkeyup="filterTable('pgsstTable', this.value)">
+          <select id="filterPgsstEst" onchange="filterTableEstPgsst(this.value)">
+            <option value="">Todos los estados</option>
+            <option>APROBADO - VIGENTE</option>
+            <option>NECESITA ACTUALIZARSE</option>
+            <option>EN PROCESO</option>
+          </select>
+          <select id="filterPgsstReg" onchange="filterTableByRegional('pgsstTable', this.value)">
+            <option value="">Todas las regionales</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="pgsstTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Regional</th>
+                <th>Nombre</th>
+                <th>Responsable</th>
+                <th>Prof. SST</th>
+                <th>Estado PGSST</th>
+                <th>Detalle</th>
+                <th>F. Envío</th>
+                <th>F. Aprobación</th>
+                <th>F. Vencimiento</th>
+                <th>Código</th>
+                <th>Certificado</th>
+                <th>1er Reporte</th>
+                <th>2do Reporte</th>
+                <th>OBS</th>
+              </tr>
+            </thead>
+            <tbody id="pgsstBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ACCIDENTES ===== -->
+  <div id="tab-accidentes" class="tab-pane">
+    <div class="kpi-grid" id="kpiAcc"></div>
+
+    <!-- Gráficos Accidentes -->
+    <div class="chart-row-2">
+      <div class="chart-card">
+        <div class="chart-title">Accidentes y Días de Baja por Mes</div>
+        <div class="chart-note">Tendencia temporal — eje izq: accidentes, eje der: días</div>
+        <div class="chart-wrap" style="height:240px;"><canvas id="chAccMes"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Tipo de Accidente</div>
+        <div class="chart-note">Clic en sector para filtrar la tabla</div>
+        <div class="chart-wrap" style="height:240px;"><canvas id="chAccTipo"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-row-2" style="margin-bottom:16px;">
+      <div class="chart-card">
+        <div class="chart-title">Por Regional / Ubicación</div>
+        <div class="chart-note">Clic en barra para filtrar</div>
+        <div class="chart-wrap" style="height:230px;"><canvas id="chAccRegional"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Documentación (DAT / Investigación / Libro)</div>
+        <div class="chart-note">Presentado vs Pendiente por tipo de documento</div>
+        <div class="chart-wrap" style="height:230px;"><canvas id="chAccDocs"></canvas></div>
+      </div>
+    </div>
+
+    <div class="mes-grid" id="mesGrid"></div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          Registro de Accidentes Laborales
+        </div>
+        <button onclick="switchTab('form_acc')" style="background:var(--danger);color:white;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Registrar Accidente</button>
+      </div>
+      <div class="card-body">
+        <div class="filter-bar">
+          <input type="text" id="filterAcc" placeholder="Buscar..." onkeyup="filterTable('accTable', this.value)">
+          <select id="filterAccMes" onchange="filterTableByMes(this.value)">
+            <option value="">Todos los meses</option>
+          </select>
+          <select id="filterAccReg" onchange="filterTableByRegional('accTable', this.value)">
+            <option value="">Todas las regionales</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="accTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Ubicación</th>
+                <th>Sucursal</th>
+                <th>Oficina</th>
+                <th>Tipo</th>
+                <th>Mes</th>
+                <th>Desde</th>
+                <th>Hasta</th>
+                <th>Días Baja</th>
+                <th>DAT</th>
+                <th>Inv. Acc.</th>
+                <th>Lib. Acc.</th>
+                <th>OBS</th>
+              </tr>
+            </thead>
+            <tbody id="accBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ============================================================
+//  AUTENTICACIÓN
+// ============================================================
+(function checkAuth() {
+  const s = localStorage.getItem('sst_auth');
+  if (!s) { window.location.href = 'login.html'; return; }
+  try {
+    const auth = JSON.parse(s);
+    const EXPIRY_MS = 8 * 60 * 60 * 1000; // 8 horas
+    if (Date.now() - auth.time > EXPIRY_MS) {
+      localStorage.removeItem('sst_auth');
+      window.location.href = 'login.html'; return;
+    }
+    document.getElementById('headerUser').textContent = auth.name || auth.user;
+  } catch(e) { localStorage.removeItem('sst_auth'); window.location.href = 'login.html'; }
+})();
+
+function logout() {
+  localStorage.removeItem('sst_auth');
+  window.location.href = 'login.html';
+}
+
+// Fecha en header
+(function setDate() {
+  const d = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('headerDate').textContent = d.toLocaleDateString('es-BO', opts);
+})();
+
+// ============================================================
+//  DATOS GLOBALES
+// ============================================================
+let DB = { sucursales:[], coordenadas:{}, comite_mixto:[], pgsst:[], accidentes:[] };
+let mapInstance = null;
+let markersLayer = null;
+let selectedMarker = null;
+
+// ============================================================
+//  CARGA DE DATOS
+// ============================================================
+async function loadData() {
+  // 1. Intentar localStorage primero (contiene actualizaciones del formulario)
+  const stored = localStorage.getItem('sst_data');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.sucursales && parsed.sucursales.length > 0) {
+        DB = parsed;
+      }
+    } catch(e) { localStorage.removeItem('sst_data'); }
+  }
+
+  // 2. Si localStorage vacío, intentar fetch datos.json (modo servidor)
+  if (!DB.sucursales || DB.sucursales.length === 0) {
+    try {
+      const r = await fetch('datos.json?t=' + Date.now());
+      if (r.ok) {
+        DB = await r.json();
+        localStorage.setItem('sst_data', JSON.stringify(DB));
+      }
+    } catch(e) { /* fetch bloqueado en file:// */ }
+  }
+
+  // 3. Fallback: datos embebidos en datos.js (siempre funciona en file://)
+  if (!DB.sucursales || DB.sucursales.length === 0) {
+    if (typeof DATOS_INICIALES !== 'undefined') {
+      DB = JSON.parse(JSON.stringify(DATOS_INICIALES));
+      localStorage.setItem('sst_data', JSON.stringify(DB));
+    }
+  }
+
+  renderAll();
+}
+
+async function refreshData() {
+  const btn = document.querySelector('.btn-refresh');
+  btn.style.opacity = '0.6';
+  btn.innerHTML = '⟳ Cargando...';
+  let ok = false;
+  try {
+    const r = await fetch('datos.json?t=' + Date.now());
+    if (r.ok) { DB = await r.json(); ok = true; }
+  } catch(e) { /* file:// no soporta fetch */ }
+
+  // Si fetch falla, recargar desde datos embebidos + localStorage
+  if (!ok) {
+    const stored = localStorage.getItem('sst_data');
+    if (stored) {
+      try { DB = JSON.parse(stored); ok = true; } catch(e) {}
+    }
+    if (!ok && typeof DATOS_INICIALES !== 'undefined') {
+      DB = JSON.parse(JSON.stringify(DATOS_INICIALES));
+      ok = true;
+    }
+  } else {
+    localStorage.setItem('sst_data', JSON.stringify(DB));
+  }
+
+  renderAll();
+  showToast(ok ? 'Datos actualizados correctamente' : 'No se pudo conectar al servidor', ok ? 'success' : 'error');
+  btn.style.opacity = '1';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="white" fill="none" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Actualizar';
+}
+
+// ============================================================
+//  RENDER PRINCIPAL
+// ============================================================
+function renderAll() {
+  renderKPIResumen();
+  renderMap();
+  renderComite();
+  renderPgsst();
+  renderAccidentes();
+  updateBadges();
+}
+
+// ============================================================
+//  KPIs RESUMEN
+// ============================================================
+function renderKPIResumen() {
+  const total = DB.sucursales ? DB.sucursales.length : 0;
+  const conCoord = DB.coordenadas ? Object.keys(DB.coordenadas).length : 0;
+  const comVig = DB.comite_mixto ? DB.comite_mixto.filter(c => (c['Estado']||'').toLowerCase().includes('vigente')).length : 0;
+  const comTotal = DB.comite_mixto ? DB.comite_mixto.length : 0;
+  const pgVig = DB.pgsst ? DB.pgsst.filter(p => (p['PGSST']||'').includes('VIGENTE')).length : 0;
+  const pgTotal = DB.pgsst ? DB.pgsst.length : 0;
+  const accTotal = DB.accidentes ? DB.accidentes.length : 0;
+  const diasBaja = DB.accidentes ? DB.accidentes.reduce((s,a)=>s+parseInt(a['Dias de Baja']||0),0) : 0;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card info">
+      <div class="kpi-label">Total Sucursales</div>
+      <div class="kpi-value">${total}</div>
+      <div class="kpi-sub">${conCoord} con coordenadas</div>
+    </div>
+    <div class="kpi-card success">
+      <div class="kpi-label">Comités Vigentes</div>
+      <div class="kpi-value">${comVig}</div>
+      <div class="kpi-sub">de ${comTotal} registrados</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">PGSST Aprobados</div>
+      <div class="kpi-value">${pgVig}</div>
+      <div class="kpi-sub">de ${pgTotal} registrados</div>
+    </div>
+    <div class="kpi-card danger">
+      <div class="kpi-label">Accidentes Registrados</div>
+      <div class="kpi-value">${accTotal}</div>
+      <div class="kpi-sub">${diasBaja} días de baja acumulados</div>
+    </div>
+    <div class="kpi-card warning">
+      <div class="kpi-label">Comités Vencidos / Sin Estado</div>
+      <div class="kpi-value">${comTotal - comVig}</div>
+      <div class="kpi-sub">Requieren atención</div>
+    </div>
+    <div class="kpi-card warning">
+      <div class="kpi-label">PGSST Sin Aprobación</div>
+      <div class="kpi-value">${pgTotal - pgVig}</div>
+      <div class="kpi-sub">En proceso o pendientes</div>
+    </div>
+  `;
+}
+
+// ============================================================
+//  MAPA
+// ============================================================
+const REGIONAL_COLORS = {
+  'Tarija': '#e74c3c',
+  'Altiplano Sur': '#3498db',
+  'Altiplano Norte': '#2ecc71',
+  'Oficina Nacional': '#9b59b6',
+  'Oriente': '#f39c12',
+  'Valles': '#1abc9c',
+  'Chaco': '#e67e22',
+  'Amazonia': '#27ae60',
+  'Pando': '#16a085',
+  'Beni': '#8e44ad',
+  'Cochabamba': '#c0392b',
+  'Santa Cruz': '#d35400',
+  'La Paz': '#2980b9',
+  'Potosí': '#7f8c8d',
+  'Oruro': '#95a5a6',
+  'Chuquisaca': '#f1c40f',
+};
+
+function getColor(regional) {
+  for (const [k,v] of Object.entries(REGIONAL_COLORS)) {
+    if (regional && regional.includes(k)) return v;
+  }
+  return '#607d8b';
+}
+
+function createMarkerIcon(color, selected = false) {
+  const size = selected ? 18 : 12;
+  const border = selected ? 3 : 2;
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;background:${color};border:${border}px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);transition:all 0.2s;${selected?'outline:3px solid '+color+';':''}"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+}
+
+function renderMap() {
+  if (!mapInstance) {
+    mapInstance = L.map('map', { zoomControl: true }).setView([-16.5, -64.5], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+    }).addTo(mapInstance);
+    markersLayer = L.layerGroup().addTo(mapInstance);
+  }
+
+  markersLayer.clearLayers();
+
+  const regionalesSet = new Set();
+  const coords = DB.coordenadas || {};
+  const filter = document.getElementById('mapFilter') ? document.getElementById('mapFilter').value : 'all';
+
+  for (const [id, c] of Object.entries(coords)) {
+    const suc = (DB.sucursales || []).find(s => s.ID_SUCURSAL === id) || {};
+    const regional = suc.REGIONAL || '';
+    regionalesSet.add(regional);
+    if (filter !== 'all' && regional !== filter) continue;
+
+    const color = getColor(regional);
+    const comite = (DB.comite_mixto || []).find(c => c.ID_SUCURSAL === id) || {};
+    const pgsst  = (DB.pgsst || []).find(p => p.ID_SUCURSAL === id) || {};
+    const accs   = (DB.accidentes || []).filter(a => a.ID_SUCURSAL === id);
+
+    const marker = L.marker([c.lat, c.lng], { icon: createMarkerIcon(color) });
+
+    marker.bindTooltip(`<div class="leaflet-tooltip-custom"><b>${c.nombre || suc['NOMBRE ESTANDARIZADO'] || id}</b><br><small>${regional}</small></div>`, { permanent: false, direction: 'top' });
+
+    marker.on('click', function() {
+      if (selectedMarker && selectedMarker._sstId !== id) {
+        selectedMarker.setIcon(createMarkerIcon(getColor((DB.sucursales||[]).find(s=>s.ID_SUCURSAL===selectedMarker._sstId)?.REGIONAL||'')));
+      }
+      selectedMarker = marker;
+      selectedMarker._sstId = id;
+      marker.setIcon(createMarkerIcon(color, true));
+      showDetail(id, suc, comite, pgsst, accs, color);
+    });
+
+    marker._sstId = id;
+    markersLayer.addLayer(marker);
+  }
+
+  // Actualizar filtro regional
+  const sel = document.getElementById('mapFilter');
+  if (sel) {
+    const prev = sel.value;
+    sel.innerHTML = '<option value="all">Todas las regionales</option>';
+    [...regionalesSet].sort().forEach(r => {
+      const o = document.createElement('option');
+      o.value = r; o.textContent = r;
+      if (r === prev) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  renderMapLegend([...regionalesSet].sort());
+}
+
+function filterMap() { renderMap(); }
+
+function renderMapLegend(regionales) {
+  const leg = document.getElementById('mapLegend');
+  if (!leg) return;
+  leg.innerHTML = regionales.map(r => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${getColor(r)}"></div>
+      <span>${r}</span>
+    </div>`).join('');
+}
+
+function showDetail(id, suc, comite, pgsst, accs, color) {
+  const nombre = suc['NOMBRE ESTANDARIZADO'] || id;
+  const regional = suc.REGIONAL || '-';
+  const tipo = suc.TIPO || '-';
+  document.getElementById('detailName').textContent = nombre;
+  document.getElementById('detailSub').textContent = regional + ' · ' + tipo;
+
+  const estadoCom = comite['Estado'] || '-';
+  const estadoPg  = pgsst['PGSST'] || '-';
+  const totalAcc  = accs.length;
+
+  const badgeCom = getBadge(estadoCom);
+  const badgePg  = getPgBadge(estadoPg);
+
+  document.getElementById('detailBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="background:#f8fbff;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Información General</div>
+        <div class="detail-item"><div class="detail-item-label">ID Sucursal</div><div class="detail-item-value">${id}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Regional</div><div class="detail-item-value">${regional}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Tipo</div><div class="detail-item-value">${tipo}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Funcionarios</div><div class="detail-item-value">${comite['Nro. Funcionarios'] || '-'}</div></div>
+      </div>
+
+      <div style="background:#f8fbff;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Comité Mixto</div>
+        <div class="detail-item"><div class="detail-item-label">Estado</div><div class="detail-item-value">${badgeCom}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Tipo Comité</div><div class="detail-item-value">${comite['Tipo2'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">F. Posesión</div><div class="detail-item-value">${comite['Fecha de Posesión'] || comite['Fecha de Posesi\u00f3n'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">F. Vencimiento</div><div class="detail-item-value">${comite['Fecha de Vencimiento'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">1er Reporte</div><div class="detail-item-value">${comite['1er REPORTE'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">2do Reporte</div><div class="detail-item-value">${comite['2do REPORTE'] || '-'}</div></div>
+      </div>
+
+      <div style="background:#f8fbff;border-radius:8px;padding:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Plan GSST</div>
+        <div class="detail-item"><div class="detail-item-label">Estado</div><div class="detail-item-value">${badgePg}</div></div>
+        <div class="detail-item"><div class="detail-item-label">Código</div><div class="detail-item-value" style="font-size:11px;">${pgsst['CODIGO DE APROBACI\u00d3N'] || pgsst['CODIGO DE APROBACIÓN'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">F. Aprobación</div><div class="detail-item-value">${pgsst['FECHA DE APROBACI\u00d3N'] || pgsst['FECHA DE APROBACIÓN'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">F. Vencimiento</div><div class="detail-item-value">${pgsst['FECHA DE VENCIMIENTO'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">1er Reporte</div><div class="detail-item-value">${pgsst['PRIMER REPORTE'] || '-'}</div></div>
+        <div class="detail-item"><div class="detail-item-label">2do Reporte</div><div class="detail-item-value">${pgsst['SEGUNDO REPORTE'] || '-'}</div></div>
+      </div>
+
+      <div style="background:#fff5f5;border-radius:8px;padding:12px;border:1px solid #fee2e2;">
+        <div style="font-size:11px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Accidentes Registrados</div>
+        <div style="font-size:28px;font-weight:800;color:var(--danger);">${totalAcc}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${totalAcc === 1 ? 'accidente' : 'accidentes'} en el período</div>
+        ${totalAcc > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--text);">Días de baja: <b>${accs.reduce((s,a)=>s+parseInt(a['Dias de Baja']||0),0)}</b></div>` : ''}
+      </div>
+    </div>`;
+}
+
+function getBadge(estado) {
+  if (!estado || estado === '-') return `<span class="status-badge status-default">Sin dato</span>`;
+  const low = estado.toLowerCase();
+  if (low.includes('vigente')) return `<span class="status-badge status-vigente">Vigente</span>`;
+  if (low.includes('vencido')) return `<span class="status-badge status-vencido">Vencido</span>`;
+  return `<span class="status-badge status-pendiente">${estado}</span>`;
+}
+
+function getPgBadge(estado) {
+  if (!estado || estado === '-') return `<span class="status-badge status-default">Sin dato</span>`;
+  if (estado.includes('VIGENTE')) return `<span class="status-badge status-vigente">${estado}</span>`;
+  if (estado.includes('ACTUALIZ')) return `<span class="status-badge status-warning" style="background:#fef9c3;color:#ca8a04;">${estado}</span>`;
+  return `<span class="status-badge status-pendiente">${estado}</span>`;
+}
+
+// ============================================================
+//  COMITÉ MIXTO
+// ============================================================
+function renderComite() {
+  const data = DB.comite_mixto || [];
+  const body = document.getElementById('comiteBody');
+  body.innerHTML = '';
+
+  // Llenar filtro regional
+  const regSel = document.getElementById('filterComiteReg');
+  const regs = [...new Set(data.map(d=>d.REGIONAL).filter(Boolean))].sort();
+  if (regSel && regSel.options.length <= 1) {
+    regs.forEach(r => { const o = document.createElement('option'); o.value=r; o.textContent=r; regSel.appendChild(o); });
+  }
+
+  data.forEach(r => {
+    const estado = r['Estado'] || '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r['ID_SUCURSAL']||''}</td>
+      <td>${r['REGIONAL']||''}</td>
+      <td>${r['NOMBRE ESTANDARIZADO']||''}</td>
+      <td>${r['TIPO']||''}</td>
+      <td style="text-align:center">${r['Nro. Funcionarios']||''}</td>
+      <td>${r['Tipo2']||''}</td>
+      <td>${getDateField(r,'Fecha de Posesi\u00f3n','Fecha de Posesión')}</td>
+      <td>${r['Fecha de Vencimiento']||''}</td>
+      <td>${getBadge(estado)}</td>
+      <td>${docBadge(r['Memorand\u00fam']||r['Memorandúm'])}</td>
+      <td>${docBadge(r['Acta de Posesi\u00f3n']||r['Acta de Posesión'])}</td>
+      <td>${docBadge(r['Certificado'])}</td>
+      <td>${docBadge(r['1er REPORTE'])}</td>
+      <td>${docBadge(r['2do REPORTE'])}</td>
+      <td>${docBadge(r['3er REPORTE'])}</td>
+      <td>${docBadge(r['REPORTE FINAL'])}</td>
+      <td style="font-size:11px;max-width:160px;white-space:normal">${r['OBS']||''}</td>`;
+    body.appendChild(tr);
+  });
+
+  // KPIs
+  const vigentes = data.filter(d=>(d['Estado']||'').toLowerCase().includes('vigente')).length;
+  const vencidos = data.filter(d=>(d['Estado']||'').toLowerCase().includes('vencido')).length;
+  const mixto = data.filter(d=>(d['Tipo2']||'').toLowerCase().includes('mixto')).length;
+  document.getElementById('kpiComite').innerHTML = `
+    <div class="kpi-card info"><div class="kpi-label">Total Registros</div><div class="kpi-value">${data.length}</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Vigentes</div><div class="kpi-value">${vigentes}</div><div class="kpi-sub">${Math.round(vigentes/data.length*100)}% del total</div></div>
+    <div class="kpi-card danger"><div class="kpi-label">Vencidos</div><div class="kpi-value">${vencidos}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Comité Mixto</div><div class="kpi-value">${mixto}</div></div>
+    <div class="kpi-card warning"><div class="kpi-label">Coordinador HSOB</div><div class="kpi-value">${data.length - mixto}</div></div>
+  `;
+  renderChartsComite();
+}
+
+function getDateField(obj, ...keys) {
+  for (const k of keys) { if (obj[k]) return obj[k]; }
+  return '';
+}
+
+function docBadge(val) {
+  if (!val || val === 'null' || val === 'nan' || val.trim() === '') return '<span style="color:#ccc;font-size:11px;">—</span>';
+  const low = val.toLowerCase();
+  if (low.includes('presentado') || low.includes('archivo') || low.includes('si') || low === 'si')
+    return `<span class="status-badge status-vigente" style="font-size:10px;">${val}</span>`;
+  if (low.includes('no') || low.includes('falta'))
+    return `<span class="status-badge status-vencido" style="font-size:10px;">${val}</span>`;
+  if (low.includes('vence') || low.includes('pendiente'))
+    return `<span class="status-badge status-pendiente" style="font-size:10px;">${val}</span>`;
+  return `<span style="font-size:12px;">${val}</span>`;
+}
+
+// ============================================================
+//  PGSST
+// ============================================================
+function renderPgsst() {
+  const data = DB.pgsst || [];
+  const body = document.getElementById('pgsstBody');
+  body.innerHTML = '';
+
+  const regSel = document.getElementById('filterPgsstReg');
+  const regs = [...new Set(data.map(d=>d.REGIONAL).filter(Boolean))].sort();
+  if (regSel && regSel.options.length <= 1) {
+    regs.forEach(r => { const o = document.createElement('option'); o.value=r; o.textContent=r; regSel.appendChild(o); });
+  }
+
+  data.forEach(r => {
+    const estado = r['PGSST'] || '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r['ID_SUCURSAL']||''}</td>
+      <td>${r['REGIONAL']||''}</td>
+      <td style="max-width:200px;white-space:normal">${r['NOMBRE ESTANDARIZADO']||''}</td>
+      <td style="max-width:160px;white-space:normal;font-size:12px;">${r['RESPONSABLE']||''}</td>
+      <td style="max-width:150px;white-space:normal;font-size:12px;">${r['PROFESIONAL SST']||''}</td>
+      <td>${getPgBadge(estado)}</td>
+      <td style="font-size:11px;">${r['DETALLE']||''}</td>
+      <td>${r['FECHA DE ENV\u00cdO']||r['FECHA DE ENVÍO']||''}</td>
+      <td>${r['FECHA DE APROBACI\u00d3N']||r['FECHA DE APROBACIÓN']||''}</td>
+      <td>${r['FECHA DE VENCIMIENTO']||''}</td>
+      <td style="font-size:10px;">${r['CODIGO DE APROBACI\u00d3N']||r['CODIGO DE APROBACIÓN']||''}</td>
+      <td>${docBadge(r['CERTIFICADO PGSST'])}</td>
+      <td>${docBadge(r['PRIMER REPORTE'])}</td>
+      <td>${docBadge(r['SEGUNDO REPORTE'])}</td>
+      <td style="font-size:11px;max-width:160px;white-space:normal;">${r['OBS']||''}</td>`;
+    body.appendChild(tr);
+  });
+
+  const aprobados = data.filter(d=>(d['PGSST']||'').includes('VIGENTE')).length;
+  const necesita  = data.filter(d=>(d['PGSST']||'').includes('ACTUALIZ')).length;
+  document.getElementById('kpiPgsst').innerHTML = `
+    <div class="kpi-card info"><div class="kpi-label">Total Registros</div><div class="kpi-value">${data.length}</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Aprobados Vigentes</div><div class="kpi-value">${aprobados}</div><div class="kpi-sub">${Math.round(aprobados/data.length*100)}% del total</div></div>
+    <div class="kpi-card warning"><div class="kpi-label">Necesita Actualización</div><div class="kpi-value">${necesita}</div></div>
+    <div class="kpi-card danger"><div class="kpi-label">Otros Estados</div><div class="kpi-value">${data.length - aprobados - necesita}</div></div>
+  `;
+  renderChartsPgsst();
+}
+
+// ============================================================
+//  ACCIDENTES
+// ============================================================
+const MESES_ORDER = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function renderAccidentes() {
+  const data = DB.accidentes || [];
+  const body = document.getElementById('accBody');
+  body.innerHTML = '';
+
+  // Filtro mes
+  const mesSel = document.getElementById('filterAccMes');
+  const meses = [...new Set(data.map(d=>d['Mes']).filter(Boolean))];
+  const mesOrdered = MESES_ORDER.filter(m=>meses.includes(m));
+  if (mesSel && mesSel.options.length <= 1) {
+    mesOrdered.forEach(m => { const o = document.createElement('option'); o.value=m; o.textContent=m; mesSel.appendChild(o); });
+  }
+
+  const regSel = document.getElementById('filterAccReg');
+  const regs = [...new Set(data.map(d=>d['Ubicación']||d['Ubicaci\u00f3n']).filter(Boolean))].sort();
+  if (regSel && regSel.options.length <= 1) {
+    regs.forEach(r => { const o = document.createElement('option'); o.value=r; o.textContent=r; regSel.appendChild(o); });
+  }
+
+  data.forEach(r => {
+    const dias = parseInt(r['Dias de Baja']||0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r['ID_SUCURSAL']||''}</td>
+      <td>${r['Ubicaci\u00f3n']||r['Ubicación']||''}</td>
+      <td>${r['Sucursal']||''}</td>
+      <td>${r['Oficina']||''}</td>
+      <td>${r['Tipo']||''}</td>
+      <td>${r['Mes']||''}</td>
+      <td>${r['Desde']||''}</td>
+      <td>${r['Hasta']||''}</td>
+      <td style="text-align:center;font-weight:700;color:var(--danger)">${dias}</td>
+      <td>${docBadge(r['DAT'])}</td>
+      <td>${docBadge(r['INV.ACC.'])}</td>
+      <td>${docBadge(r['LIB.ACC.'])}</td>
+      <td style="font-size:11px;max-width:180px;white-space:normal;">${r['OBS']||''}</td>`;
+    body.appendChild(tr);
+  });
+
+  // KPIs accidentes
+  const totalDias = data.reduce((s,a)=>s+parseInt(a['Dias de Baja']||0),0);
+  const conDat  = data.filter(a=>a['DAT']==='SI').length;
+  const conInv  = data.filter(a=>a['INV.ACC.']==='SI').length;
+  document.getElementById('kpiAcc').innerHTML = `
+    <div class="kpi-card danger"><div class="kpi-label">Total Accidentes</div><div class="kpi-value">${data.length}</div></div>
+    <div class="kpi-card warning"><div class="kpi-label">Días de Baja Total</div><div class="kpi-value">${totalDias}</div></div>
+    <div class="kpi-card info"><div class="kpi-label">Promedio Días/Accidente</div><div class="kpi-value">${data.length ? (totalDias/data.length).toFixed(1) : 0}</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Con DAT</div><div class="kpi-value">${conDat}</div><div class="kpi-sub">de ${data.length}</div></div>
+    <div class="kpi-card success"><div class="kpi-label">Con Investigación</div><div class="kpi-value">${conInv}</div><div class="kpi-sub">de ${data.length}</div></div>
+  `;
+
+  // Cards por mes
+  const mesGrid = document.getElementById('mesGrid');
+  const byMes = {};
+  data.forEach(a => {
+    const m = a['Mes'] || 'Sin mes';
+    if (!byMes[m]) byMes[m] = { count:0, dias:0 };
+    byMes[m].count++;
+    byMes[m].dias += parseInt(a['Dias de Baja']||0);
+  });
+  mesGrid.innerHTML = MESES_ORDER.filter(m=>byMes[m]).map(m=>`
+    <div class="mes-card">
+      <div class="mes-name">${m}</div>
+      <div class="mes-count">${byMes[m].count}</div>
+      <div class="mes-dias">${byMes[m].dias} días baja</div>
+    </div>`).join('');
+  renderChartsAcc();
+}
+
+// ============================================================
+//  BADGES NAV
+// ============================================================
+function updateBadges() {
+  document.getElementById('badgeComite').textContent = (DB.comite_mixto||[]).length;
+  document.getElementById('badgePgsst').textContent  = (DB.pgsst||[]).length;
+  document.getElementById('badgeAcc').textContent    = (DB.accidentes||[]).length;
+}
+
+// ============================================================
+//  FILTROS
+// ============================================================
+function filterTable(tableId, query) {
+  const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+  const q = query.toLowerCase();
+  rows.forEach(tr => {
+    tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function filterTableByRegional(tableId, val) {
+  const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+  rows.forEach(tr => {
+    if (!val) { tr.style.display = ''; return; }
+    const cells = tr.querySelectorAll('td');
+    const regional = cells[1] ? cells[1].textContent.trim() : '';
+    tr.style.display = regional === val ? '' : 'none';
+  });
+}
+
+function filterTableByMes(val) {
+  const rows = document.querySelectorAll('#accTable tbody tr');
+  rows.forEach(tr => {
+    if (!val) { tr.style.display = ''; return; }
+    const cells = tr.querySelectorAll('td');
+    const mes = cells[5] ? cells[5].textContent.trim() : '';
+    tr.style.display = mes === val ? '' : 'none';
+  });
+}
+
+function filterTableEstPgsst(val) {
+  const rows = document.querySelectorAll('#pgsstTable tbody tr');
+  rows.forEach(tr => {
+    if (!val) { tr.style.display = ''; return; }
+    tr.style.display = tr.textContent.includes(val) ? '' : 'none';
+  });
+}
+
+function filterTableMulti(tableId, filters) {
+  const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+  rows.forEach(tr => {
+    let show = true;
+    filters.forEach(f => {
+      if (!f.val) return;
+      const cells = tr.querySelectorAll('td');
+      const cell = cells[f.col] ? cells[f.col].textContent.trim() : '';
+      if (!cell.includes(f.val)) show = false;
+    });
+    tr.style.display = show ? '' : 'none';
+  });
+}
+
+// ============================================================
+//  TABS
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  const tab = document.querySelector(`[data-tab="${name}"]`);
+  const pane = document.getElementById(`tab-${name}`);
+  if (tab) tab.classList.add('active');
+  if (pane) {
+    pane.classList.add('active');
+    // Resize charts for active tab
+    const tabCharts = {
+      comite:    ['chComiteEstado','chComiteRegional','chComiteDocs'],
+      pgsst:     ['chPgsstEstado','chPgsstRegional','chPgsstReportes'],
+      accidentes:['chAccMes','chAccTipo','chAccRegional','chAccDocs'],
+    };
+    if (tabCharts[name]) {
+      setTimeout(() => { tabCharts[name].forEach(id => { if(CHARTS[id]) try{CHARTS[id].resize();}catch(e){} }); }, 60);
+    }
+    if (name === 'resumen' && mapInstance) {
+      setTimeout(() => mapInstance.invalidateSize(), 100);
+    }
+  }
+}
+
+// ============================================================
+//  TOAST
+// ============================================================
+function showToast(msg, type='info') {
+  const t = document.createElement('div');
+  const colors = { success:'#16a34a', error:'#dc2626', info:'#0891b2' };
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;background:${colors[type]||colors.info};color:white;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3000);
+}
+
+// ============================================================
+//  BROADCAST CHANNEL — actualización en tiempo real desde formulario
+// ============================================================
+try {
+  const bc = new BroadcastChannel('sst_canal');
+  bc.onmessage = function(e) {
+    if (e.data && e.data.tipo === 'datos_actualizados') {
+      const stored = localStorage.getItem('sst_data');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.sucursales) {
+            DB = parsed;
+            renderAll();
+            showToast('✅ Datos actualizados desde el formulario', 'success');
+          }
+        } catch(err) {}
+      }
+    }
+  };
+} catch(e) { /* BroadcastChannel no disponible */ }
+
+// ============================================================
+//  BÚSQUEDA DE AGENCIAS (Resumen)
+// ============================================================
+function onAgencyInput(val) {
+  document.getElementById('agencyClearBtn').style.display = val ? 'block' : 'none';
+  const q = val.toLowerCase().trim();
+  const suc = DB.sucursales || [];
+  const filtered = q
+    ? suc.filter(s =>
+        (s['NOMBRE ESTANDARIZADO']||'').toLowerCase().includes(q) ||
+        (s.ID_SUCURSAL||'').toLowerCase().includes(q) ||
+        (s.REGIONAL||'').toLowerCase().includes(q))
+    : suc.slice(0, 25);
+  renderAgencyOptions(filtered.slice(0, 30));
+  showAgencyDropdown();
+}
+
+function renderAgencyOptions(items) {
+  const dd = document.getElementById('agencyDropdown');
+  if (!items.length) {
+    dd.innerHTML = '<div class="agency-no-results">Sin resultados</div>';
+    return;
+  }
+  dd.innerHTML = items.map(s => `
+    <div class="agency-option" onmousedown="selectAgency('${s.ID_SUCURSAL}')">
+      <span class="agency-opt-id">${s.ID_SUCURSAL}</span>
+      <span class="agency-opt-name">${s['NOMBRE ESTANDARIZADO']||''}</span>
+      <span class="agency-opt-reg">${s.REGIONAL||''}</span>
+    </div>`).join('');
+}
+
+function showAgencyDropdown() {
+  const val = document.getElementById('agencySearch').value;
+  if (!val) renderAgencyOptions((DB.sucursales||[]).slice(0,25));
+  document.getElementById('agencyDropdown').classList.add('open');
+}
+
+function hideAgencyDropdown() {
+  document.getElementById('agencyDropdown').classList.remove('open');
+}
+
+function selectAgency(id) {
+  const suc = (DB.sucursales||[]).find(s => s.ID_SUCURSAL === id);
+  if (!suc) return;
+  document.getElementById('agencySearch').value = suc['NOMBRE ESTANDARIZADO'] || id;
+  document.getElementById('agencyClearBtn').style.display = 'block';
+  hideAgencyDropdown();
+  // Volar al marcador
+  const coord = DB.coordenadas ? DB.coordenadas[id] : null;
+  if (coord && mapInstance) {
+    mapInstance.flyTo([coord.lat, coord.lng], 15, { duration: 1.2 });
+  }
+  showDetail(id);
+}
+
+function clearAgencySearch() {
+  document.getElementById('agencySearch').value = '';
+  document.getElementById('agencyClearBtn').style.display = 'none';
+  hideAgencyDropdown();
+}
+
+// ============================================================
+//  CHARTS — instancias globales
+// ============================================================
+const CHARTS = {};
+
+function mkChart(id, cfg) {
+  if (CHARTS[id]) { try { CHARTS[id].destroy(); } catch(e){} delete CHARTS[id]; }
+  const el = document.getElementById(id);
+  if (!el) return;
+  CHARTS[id] = new Chart(el, cfg);
+  return CHARTS[id];
+}
+
+const C = {
+  green:  '#007534', greenL: 'rgba(0,117,52,0.18)',
+  orange: '#F89A1C', orangeL:'rgba(248,154,28,0.18)',
+  red:    '#dc2626', redL:   'rgba(220,38,38,0.18)',
+  lgreen: '#90C04A', lgreenL:'rgba(144,192,74,0.18)',
+  yellow: '#FEC30C',
+  beige:  '#FFEDBA',
+  gray:   '#9ca3af',
+  palette:['#007534','#F89A1C','#90C04A','#FEC30C','#dc2626','#0891b2','#7c3aed','#db2777','#ea580c','#0d9488'],
+};
+
+// ============================================================
+//  CHARTS — COMITÉ MIXTO
+// ============================================================
+function renderChartsComite() {
+  const data = DB.comite_mixto || [];
+  if (!data.length) return;
+
+  // 1. Donut — Estado
+  const vig = data.filter(d=>(d['Estado']||'').toLowerCase().includes('vigente')).length;
+  const ven = data.filter(d=>(d['Estado']||'').toLowerCase().includes('vencido')).length;
+  const sin = data.length - vig - ven;
+
+  mkChart('chComiteEstado', {
+    type: 'doughnut',
+    data: {
+      labels: ['Vigente','Vencido','Sin Estado'],
+      datasets:[{ data:[vig,ven,sin], backgroundColor:[C.green,C.red,C.gray], borderWidth:3, borderColor:'#fff', hoverOffset:8 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins: {
+        legend:{ position:'bottom', labels:{ font:{size:11}, padding:12, usePointStyle:true } },
+        tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw/data.length*100)}%)` } }
+      },
+      onClick(evt, el) {
+        if (!el.length) return;
+        const lbl = ['vigente','vencido',''][el[0].index];
+        const sel = document.getElementById('filterComiteEst');
+        const map = ['Vigente','Vencido',''];
+        sel.value = map[el[0].index];
+        filterTableMulti('comiteTable',[{col:8, val:sel.value}]);
+      }
+    }
+  });
+
+  // 2. Stacked bar — Por Regional
+  const byR = {};
+  data.forEach(d => {
+    const r = d.REGIONAL||'Sin regional';
+    if (!byR[r]) byR[r]={v:0,x:0,o:0};
+    const e=(d['Estado']||'').toLowerCase();
+    if(e.includes('vigente')) byR[r].v++;
+    else if(e.includes('vencido')) byR[r].x++;
+    else byR[r].o++;
+  });
+  const regs = Object.keys(byR).sort();
+
+  mkChart('chComiteRegional', {
+    type:'bar',
+    data:{ labels:regs, datasets:[
+      {label:'Vigente', data:regs.map(r=>byR[r].v), backgroundColor:C.green, stack:'s', borderRadius:4},
+      {label:'Vencido', data:regs.map(r=>byR[r].x), backgroundColor:C.red,   stack:'s'},
+      {label:'Sin Estado',data:regs.map(r=>byR[r].o),backgroundColor:C.gray, stack:'s'},
+    ]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:{size:10},padding:8,usePointStyle:true}} },
+      scales:{ x:{stacked:true,ticks:{font:{size:9}}}, y:{stacked:true,ticks:{font:{size:9}}} },
+      onClick(evt, el) {
+        if (!el.length) return;
+        const reg = regs[el[0].index];
+        const sel = document.getElementById('filterComiteReg');
+        sel.value = reg;
+        filterTableByRegional('comiteTable', reg);
+      }
+    }
+  });
+
+  // 3. Bar — Documentación
+  function hasVal(r,keys){ return keys.some(k=>{ const v=String(r[k]||'').trim(); return v&&v!=='null'&&v!=='nan'&&v.toLowerCase()!=='no'&&v!==''; }); }
+  const docs = [
+    {lbl:'Memorándum',  keys:['Memorandúm','Memorand\u00fam']},
+    {lbl:'Acta Posesión',keys:['Acta de Posesión','Acta de Posesi\u00f3n']},
+    {lbl:'Certificado', keys:['Certificado']},
+    {lbl:'1er Reporte', keys:['1er REPORTE']},
+    {lbl:'2do Reporte', keys:['2do REPORTE']},
+    {lbl:'3er Reporte', keys:['3er REPORTE']},
+    {lbl:'Rep. Final',  keys:['REPORTE FINAL']},
+  ];
+  const pcts = docs.map(d => Math.round(data.filter(r=>hasVal(r,d.keys)).length/data.length*100));
+
+  mkChart('chComiteDocs', {
+    type:'bar',
+    data:{ labels:docs.map(d=>d.lbl), datasets:[{
+      label:'% Completado', data:pcts,
+      backgroundColor: pcts.map(p => p>=70?C.green : p>=40?C.orange : C.red),
+      borderRadius:6,
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.raw}% (${Math.round(ctx.raw*data.length/100)} de ${data.length})`}} },
+      scales:{ y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}}}, x:{ticks:{font:{size:10}}} }
+    }
+  });
+}
+
+// ============================================================
+//  CHARTS — PGSST
+// ============================================================
+function renderChartsPgsst() {
+  const data = DB.pgsst || [];
+  if (!data.length) return;
+
+  const vig  = data.filter(d=>(d['PGSST']||'').includes('VIGENTE')).length;
+  const act  = data.filter(d=>(d['PGSST']||'').includes('ACTUALIZ')).length;
+  const proc = data.filter(d=>(d['PGSST']||'').toLowerCase().includes('proceso')).length;
+  const otro = data.length - vig - act - proc;
+
+  mkChart('chPgsstEstado', {
+    type:'doughnut',
+    data:{ labels:['Aprobado-Vigente','Necesita Actualización','En Proceso','Otros'],
+      datasets:[{ data:[vig,act,proc,otro], backgroundColor:[C.green,C.orange,C.lgreen,C.gray], borderWidth:3, borderColor:'#fff', hoverOffset:8 }]},
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:10},padding:10,usePointStyle:true}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw/data.length*100)}%)`}}
+      },
+      onClick(evt,el){
+        if(!el.length) return;
+        const vals=['VIGENTE','ACTUALIZ','proceso',''];
+        const sel=document.getElementById('filterPgsstEst');
+        sel.value=['APROBADO - VIGENTE','NECESITA ACTUALIZARSE','EN PROCESO',''][el[0].index]||'';
+        filterTableEstPgsst(sel.value);
+      }
+    }
+  });
+
+  const byR={};
+  data.forEach(d=>{
+    const r=d.REGIONAL||'Sin regional';
+    if(!byR[r]) byR[r]={v:0,a:0,o:0};
+    if((d['PGSST']||'').includes('VIGENTE')) byR[r].v++;
+    else if((d['PGSST']||'').includes('ACTUALIZ')) byR[r].a++;
+    else byR[r].o++;
+  });
+  const regs=Object.keys(byR).sort();
+
+  mkChart('chPgsstRegional',{
+    type:'bar',
+    data:{ labels:regs, datasets:[
+      {label:'Vigente',  data:regs.map(r=>byR[r].v), backgroundColor:C.green,  stack:'s', borderRadius:4},
+      {label:'Actualizar',data:regs.map(r=>byR[r].a),backgroundColor:C.orange, stack:'s'},
+      {label:'Otros',    data:regs.map(r=>byR[r].o), backgroundColor:C.gray,   stack:'s'},
+    ]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8,usePointStyle:true}}},
+      scales:{x:{stacked:true,ticks:{font:{size:9}}},y:{stacked:true,ticks:{font:{size:9}}}},
+      onClick(evt,el){
+        if(!el.length) return;
+        const reg=regs[el[0].index];
+        document.getElementById('filterPgsstReg').value=reg;
+        filterTableByRegional('pgsstTable',reg);
+      }
+    }
+  });
+
+  function cntDoc(key){ return data.filter(d=>{ const v=String(d[key]||'').trim(); return v&&v!=='null'&&v.toLowerCase()!=='no'&&v!==''; }).length; }
+  const cert=cntDoc('CERTIFICADO PGSST'), r1=cntDoc('PRIMER REPORTE'), r2=cntDoc('SEGUNDO REPORTE');
+  const n=data.length;
+
+  mkChart('chPgsstReportes',{
+    type:'bar',
+    data:{ labels:['Certificado PGSST','1er Reporte','2do Reporte'],
+      datasets:[
+        {label:'Entregado', data:[cert,r1,r2], backgroundColor:C.green,  borderRadius:6},
+        {label:'Pendiente', data:[n-cert,n-r1,n-r2], backgroundColor:'rgba(220,38,38,0.25)', borderRadius:6},
+      ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:10,usePointStyle:true}}},
+      scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,max:n,ticks:{font:{size:9}}}}
+    }
+  });
+}
+
+// ============================================================
+//  CHARTS — ACCIDENTES
+// ============================================================
+const MESES_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function renderChartsAcc() {
+  const data = DB.accidentes || [];
+  if (!data.length) return;
+
+  // 1. Mixed bar+line — por Mes
+  const byM={};
+  MESES_NAMES.forEach(m=>byM[m]={c:0,d:0});
+  data.forEach(a=>{ const m=a['Mes']; if(byM[m]){byM[m].c++;byM[m].d+=parseInt(a['Dias de Baja']||0);} });
+  const meses=MESES_NAMES.filter(m=>byM[m].c>0);
+
+  mkChart('chAccMes',{
+    type:'bar',
+    data:{ labels:meses, datasets:[
+      {label:'Accidentes', data:meses.map(m=>byM[m].c), backgroundColor:'rgba(220,38,38,0.75)', borderRadius:5, yAxisID:'y'},
+      {label:'Días de Baja', type:'line', data:meses.map(m=>byM[m].d), borderColor:C.orange, backgroundColor:'rgba(248,154,28,0.12)', fill:true, tension:0.4, pointRadius:5, pointBackgroundColor:C.orange, yAxisID:'y1'},
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:10,usePointStyle:true}}},
+      scales:{
+        y: {position:'left', ticks:{font:{size:9}},  title:{display:true,text:'Accidentes',font:{size:9}}},
+        y1:{position:'right',ticks:{font:{size:9}}, grid:{drawOnChartArea:false}, title:{display:true,text:'Días Baja',font:{size:9}}},
+        x: {ticks:{font:{size:10}}}
+      }
+    }
+  });
+
+  // 2. Donut — Tipo
+  const byT={};
+  data.forEach(a=>{ const t=a['Tipo']||'Sin tipo'; byT[t]=(byT[t]||0)+1; });
+  const tipos=Object.keys(byT);
+
+  mkChart('chAccTipo',{
+    type:'doughnut',
+    data:{ labels:tipos, datasets:[{data:tipos.map(t=>byT[t]), backgroundColor:tipos.map((_,i)=>C.palette[i%C.palette.length]), borderWidth:3, borderColor:'#fff', hoverOffset:8}]},
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:10},padding:8,usePointStyle:true}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw}`}}
+      },
+      onClick(evt,el){
+        if(!el.length) return;
+        const tipo=tipos[el[0].index];
+        document.getElementById('filterAcc').value=tipo;
+        filterTable('accTable',tipo);
+      }
+    }
+  });
+
+  // 3. Horizontal bar — Por Regional
+  const byReg={};
+  data.forEach(a=>{ const r=a['Ubicaci\u00f3n']||a['Ubicación']||'Sin regional'; if(!byReg[r]) byReg[r]={c:0,d:0}; byReg[r].c++; byReg[r].d+=parseInt(a['Dias de Baja']||0); });
+  const regs=Object.keys(byReg).sort((a,b)=>byReg[b].c-byReg[a].c);
+
+  mkChart('chAccRegional',{
+    type:'bar',
+    data:{ labels:regs, datasets:[
+      {label:'Accidentes', data:regs.map(r=>byReg[r].c), backgroundColor:'rgba(220,38,38,0.75)', borderRadius:4},
+      {label:'Días de Baja',data:regs.map(r=>byReg[r].d),backgroundColor:'rgba(248,154,28,0.75)',borderRadius:4},
+    ]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:10,usePointStyle:true}}},
+      scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}},
+      onClick(evt,el){
+        if(!el.length) return;
+        const reg=regs[el[0].index];
+        document.getElementById('filterAccReg').value=reg;
+        filterTableByRegional('accTable',reg);
+      }
+    }
+  });
+
+  // 4. Stacked bar — Documentación
+  const datSI=data.filter(a=>a['DAT']==='SI').length;
+  const invSI=data.filter(a=>a['INV.ACC.']==='SI').length;
+  const libSI=data.filter(a=>a['LIB.ACC.']==='SI').length;
+  const n=data.length;
+
+  mkChart('chAccDocs',{
+    type:'bar',
+    data:{ labels:['DAT','Investigación','Libro Acc.'], datasets:[
+      {label:'Presentado (SI)', data:[datSI,invSI,libSI], backgroundColor:C.green, borderRadius:6},
+      {label:'No presentado',   data:[n-datSI,n-invSI,n-libSI], backgroundColor:'rgba(220,38,38,0.2)', borderRadius:6},
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:10,usePointStyle:true}}},
+      scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,max:n,ticks:{font:{size:9}}}}
+    }
+  });
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+loadData();
+</script>
+</body>
+</html>
